@@ -1,24 +1,115 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <link rel='stylesheet' type="text/css" href="main.css">
     <script src="jquery.js"></script>
     <script src="data_generator.js"></script>
+    <script src="jquery.timeago.js" type="text/javascript"></script>
   </head>
   <body>
+
+  <nav>
+    <h1>TWITTLER</h1>
+  </nav>
+
+  <div class="grid">
+
+    <section class="profile-outter-frame">
+      <div class="profile-inner-frame">
+        <div class="profile-img"></div>
+        <h1 class="profile-userName">@whitzhu</h1>
+        <p class="profile-des">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas non sem ultrices, mattis ex ac, pulvinar lorem. </p>
+      </div>
+    </section>
+
+    <section class="tweet-outter-frame">
+      <div class="tweet-inner-frame">
+       
+        <div class="tweet-frame">  
+        </div>
+      </div>
+    </section>
+
+    <section class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <div class="modal-user">
+        </div>
+        <div class="modal-tweets">
+        </div>
+      </div>
+    </section>
+
+  </div>
+ 
     <script>
 
       $(document).ready(function(){
         var $body = $('body');
-        $body.html('');
-
+        var $frame = $('.tweet-frame');
+        var prevIndex = streams.home.length - 1;
         var index = streams.home.length - 1;
+
+        // Load all tweets 
         while(index >= 0){
           var tweet = streams.home[index];
-          var $tweet = $('<div></div>');
-          $tweet.text('@' + tweet.user + ': ' + tweet.message);
-          $tweet.appendTo($body);
+          var $tweet = $('<div class="tweet "></div>');
+          $tweet.html("<a href='#'><span class='tweet-user'>@" + tweet.user + "</span></a><time class='timeago tweet-time' datetime='"+ convertTime(tweet.created_at) + "'></time><p class='tweet-msg'>" + tweet.message + "</p>");
+          $tweet.appendTo($frame);
           index -= 1;
+          jQuery($('.tweet-frame time')).timeago();
         }
+
+        function convertTime(time){
+          var time = JSON.stringify(time);
+          return time.slice(1,time.length-1);
+        }
+
+        // load new tweet method
+        function updateTweet(){
+          index = streams.home.length - 1;
+          if (index > prevIndex){
+            for (var i = prevIndex; i < index; i++){
+              tweet = streams.home[i];
+              $tweet = $('<div class="tweet"></div>');
+              $tweet.html("<a href='#'><span class='tweet-user'>@" + tweet.user + "</span></a><time class='timeago tweet-time' datetime='"+ convertTime(tweet.created_at) + "'></time><p class='tweet-msg'>" + tweet.message + "</p>");
+              $tweet.prependTo($frame);
+              jQuery($('.tweet-frame time')).timeago();
+            }
+          }
+          prevIndex = index;
+        }
+
+        // Loads new tweets on page
+        setInterval(updateTweet, 3000);
+
+        // See user's timeline
+        $('.tweet-frame').on('click','.tweet-user', function(event){
+          var $modalTweets = $('.modal-tweets');
+          var $modalUser = $('.modal-user')
+          var userName = $(this).html().slice(1);
+          $modalTweets.empty();
+          $modalUser.empty();
+          index = streams.users[userName].length -1;
+
+          $(".modal").show();
+          $("<h1 class='modal-userName'>@" + userName + "</h1>").appendTo($modalUser);
+                
+          while(index >= 0){
+            tweet = streams.users[userName][index];
+            $tweet = $('<div class="tweet "></div>');
+            $tweet.html("<a href='#'><span class='tweet-user'>@" + tweet.user + "</span></a><time class='timeago tweet-time' datetime='"+ convertTime(tweet.created_at) + "'></time><p class='tweet-msg'>" + tweet.message + "</p>");
+            $tweet.appendTo( $modalTweets);
+            index -= 1;
+            jQuery($('.modal-tweets time')).timeago();
+          }
+        });
+        
+        // Exit User's Timeline
+        $('.modal-content').on('click','.close', function(){
+          $('.modal').hide();
+        });
+
 
       });
 
